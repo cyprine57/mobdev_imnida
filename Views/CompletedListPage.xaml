@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:ListImnida.ViewModels"
+             xmlns:models="clr-namespace:ListImnida.Models"
+             x:Class="ListImnida.Views.CompletedListPage"
+             Title="{Binding Title}">
+    
+    <Grid>
+        <ListView ItemsSource="{Binding Items}"
+                  SelectedItem="{Binding SelectedItem}"
+                  HasUnevenRows="True"
+                  Margin="10">
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="models:TodoItem">
+                    <ViewCell>
+                        <Frame Margin="0,5" Padding="15" CornerRadius="8" HasShadow="False" BorderColor="LightGray">
+                            <VerticalStackLayout>
+                                <Label Text="{Binding Title}" 
+                                       FontAttributes="Bold" 
+                                       FontSize="18" 
+                                       TextDecorations="Strikethrough"
+                                       TextColor="Gray"/>
+                                <Label Text="{Binding Details}" 
+                                       FontSize="14" 
+                                       TextColor="LightGray" 
+                                       LineBreakMode="TailTruncation"
+                                       MaxLines="2"/>
+                            </VerticalStackLayout>
+                        </Frame>
+                    </ViewCell>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</ContentPage>

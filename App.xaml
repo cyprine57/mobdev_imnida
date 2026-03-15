@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:ListImnida"
+             x:Class="ListImnida.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <Color x:Key="Primary">#8A9A5B</Color>                  <!-- Sage Green -->
+            <Color x:Key="Secondary">#EBB7C1</Color>                <!-- Pink Accent -->
+            <Color x:Key="Tertiary">#6A7A3B</Color>                 <!-- Darker Sage -->
+            <Color x:Key="Background">#F4F8F4</Color>               <!-- Very light sage -->
+            <Color x:Key="White">White</Color>
+            <Color x:Key="Black">Black</Color>
+            <Color x:Key="DarkText">#333333</Color>
+
+            <Style TargetType="ContentPage">
+                <Setter Property="BackgroundColor" Value="{StaticResource Background}" />
+            </Style>
+
+            <Style TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                <Setter Property="TextColor" Value="{StaticResource White}" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Padding" Value="14,10" />
+                <Setter Property="FontAttributes" Value="Bold" />
+            </Style>
+            
+            <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="BackgroundColor" Value="{StaticResource Secondary}" />
+                <Setter Property="TextColor" Value="{StaticResource DarkText}" />
+            </Style>
+
+            <Style TargetType="Entry">
+                <Setter Property="BackgroundColor" Value="{StaticResource White}" />
+                <Setter Property="TextColor" Value="{StaticResource DarkText}" />
+                <Setter Property="PlaceholderColor" Value="LightGray" />
+            </Style>
+
+            <Style TargetType="Label">
+                <Setter Property="TextColor" Value="{StaticResource DarkText}" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

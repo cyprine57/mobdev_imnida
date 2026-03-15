@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:ListImnida.ViewModels"
+             x:Class="ListImnida.Views.SignUpPage"
+             Title="Sign Up">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="20" Padding="30" VerticalOptions="Center">
+            
+            <Label Text="Create Account" 
+                   FontSize="32" 
+                   FontAttributes="Bold" 
+                   HorizontalOptions="Center" 
+                   TextColor="{StaticResource Primary}"/>
+
+            <Entry Placeholder="User Name" 
+                   Text="{Binding UserName}" 
+                   Keyboard="Text"/>
+                   
+            <Entry Placeholder="Email Address" 
+                   Text="{Binding Email}" 
+                   Keyboard="Email"/>
+                   
+            <Entry Placeholder="Password" 
+                   Text="{Binding Password}" 
+                   IsPassword="True"/>
+
+            <Entry Placeholder="Confirm Password" 
+                   Text="{Binding ConfirmPassword}" 
+                   IsPassword="True"/>
+
+            <Button Text="Sign Up" 
+                    Command="{Binding SignUpCommand}" 
+                    Margin="0,20,0,0"/>
+
+            <Button Text="Back to Sign In" 
+                    Style="{StaticResource AccentButton}"
+                    Command="{Binding GoBackCommand}"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

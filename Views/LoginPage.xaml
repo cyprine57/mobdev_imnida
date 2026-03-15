@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:ListImnida.ViewModels"
+             x:Class="ListImnida.Views.LoginPage"
+             Title="Sign In">
+
+    <VerticalStackLayout Spacing="20" Padding="30" VerticalOptions="Center">
+        
+        <Label Text="ListImnida" 
+               FontSize="32" 
+               FontAttributes="Bold" 
+               HorizontalOptions="Center" 
+               TextColor="{StaticResource Primary}"/>
+
+        <Label Text="Sign In to continue" 
+               FontSize="16" 
+               HorizontalOptions="Center" 
+               Margin="0,0,0,20"/>
+
+        <Entry Placeholder="Email Address" 
+               Text="{Binding Email}" 
+               Keyboard="Email"/>
+               
+        <Entry Placeholder="Password" 
+               Text="{Binding Password}" 
+               IsPassword="True"/>
+
+        <Button Text="Sign In" 
+                Command="{Binding LoginCommand}" 
+                Margin="0,20,0,0"/>
+
+        <Button Text="Don't have an account? Sign Up" 
+                Style="{StaticResource AccentButton}"
+                Command="{Binding GoToSignUpCommand}"/>
+
+    </VerticalStackLayout>
+</ContentPage>
