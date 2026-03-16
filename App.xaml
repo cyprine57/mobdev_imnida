@@ -25,9 +25,12 @@
                 <Setter Property="FontAttributes" Value="Bold" />
             </Style>
             
-            <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Style x:Key="AccentButton" TargetType="Button">
                 <Setter Property="BackgroundColor" Value="{StaticResource Secondary}" />
                 <Setter Property="TextColor" Value="{StaticResource DarkText}" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Padding" Value="14,10" />
+                <Setter Property="FontAttributes" Value="Bold" />
             </Style>
 
             <Style TargetType="Entry">
