@@ -18,10 +18,13 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
-        // Register Services
+        // ── Infrastructure ────────────────────────────────────────────────────
+        builder.Services.AddSingleton<HttpClient>();
+        builder.Services.AddSingleton<ApiService>();
+        builder.Services.AddSingleton<SessionService>();
         builder.Services.AddSingleton<ITodoService, TodoService>();
 
-        // Register ViewModels
+        // ── ViewModels ────────────────────────────────────────────────────────
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<SignUpViewModel>();
         builder.Services.AddTransient<TodoListViewModel>();
@@ -30,7 +33,7 @@ public static class MauiProgram
         builder.Services.AddTransient<CompletedDetailViewModel>();
         builder.Services.AddTransient<ProfileViewModel>();
 
-        // Register Views
+        // ── Views ─────────────────────────────────────────────────────────────
         builder.Services.AddTransient<LoginPage>();
         builder.Services.AddTransient<SignUpPage>();
         builder.Services.AddTransient<TodoListPage>();

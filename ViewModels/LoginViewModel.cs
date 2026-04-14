@@ -1,9 +1,13 @@
 using System.Windows.Input;
+using ListImnida.Services;
 
 namespace ListImnida.ViewModels;
 
 public class LoginViewModel : BaseViewModel
 {
+    private readonly ApiService _api;
+    private readonly SessionService _session;
+
     private string _email = string.Empty;
     public string Email
     {
@@ -21,21 +25,48 @@ public class LoginViewModel : BaseViewModel
     public ICommand LoginCommand { get; }
     public ICommand GoToSignUpCommand { get; }
 
-    public LoginViewModel()
+    public LoginViewModel(ApiService api, SessionService session)
     {
-        LoginCommand = new Command(OnLoginClicked);
+        _api = api;
+        _session = session;
+
+        LoginCommand = new Command(async () => await OnLoginClicked());
         GoToSignUpCommand = new Command(OnGoToSignUpClicked);
     }
 
-    private void OnLoginClicked(object obj)
+    private async Task OnLoginClicked()
     {
-        // Simple logic: navigate to AppShell on login
-        Application.Current!.MainPage = new AppShell();
+        if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Validation", "Email and password are required.", "OK");
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var (success, message, user) = await _api.SignInAsync(Email, Password);
+
+            if (success && user != null)
+            {
+                _session.SetUser(user);
+                Application.Current!.MainPage = new AppShell();
+            }
+            else
+            {
+                await Application.Current!.MainPage!.DisplayAlert("Sign In Failed", message, "OK");
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
-    private async void OnGoToSignUpClicked(object obj)
+    private void OnGoToSignUpClicked(object obj)
     {
-        // We will just swap the main page for simplicity 
-        Application.Current!.MainPage = new Views.SignUpPage(new SignUpViewModel());
+        // Navigate to Sign Up page — resolving through DI via service locator pattern
+        var signUpVm = IPlatformApplication.Current!.Services.GetRequiredService<SignUpViewModel>();
+        Application.Current!.MainPage = new NavigationPage(new Views.SignUpPage(signUpVm));
     }
 }

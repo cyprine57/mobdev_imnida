@@ -14,8 +14,8 @@
 
         <Frame Padding="20" CornerRadius="12" HasShadow="False" BorderColor="{StaticResource Secondary}">
             <VerticalStackLayout Spacing="8">
-                <Label Text="User Name" FontAttributes="Bold" TextColor="Gray" />
-                <Label Text="{Binding UserName}" FontSize="18" />
+                <Label Text="Full Name" FontAttributes="Bold" TextColor="Gray" />
+                <Label Text="{Binding FullName}" FontSize="18" />
 
                 <BoxView HeightRequest="1" Color="LightGray" Margin="0,8" />
 

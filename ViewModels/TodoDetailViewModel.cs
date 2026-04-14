@@ -9,6 +9,7 @@ public class TodoDetailViewModel : BaseViewModel
 {
     private readonly ITodoService _todoService;
 
+    // ItemId comes as a string from the query parameter
     private string _itemId = string.Empty;
     public string ItemId
     {
@@ -33,9 +34,8 @@ public class TodoDetailViewModel : BaseViewModel
         get => _itemDetails;
         set => SetProperty(ref _itemDetails, value);
     }
-    
-    // To decide whether we are creating a new item or updating an existing one
-    public bool IsNewItem => string.IsNullOrWhiteSpace(ItemId);
+
+    public bool IsNewItem => string.IsNullOrWhiteSpace(ItemId) || ItemId == "0";
 
     public ICommand SaveCommand { get; }
     public ICommand CompleteCommand { get; }
@@ -44,7 +44,7 @@ public class TodoDetailViewModel : BaseViewModel
     public TodoDetailViewModel(ITodoService todoService)
     {
         _todoService = todoService;
-        
+
         SaveCommand = new Command(async () => await OnSave());
         CompleteCommand = new Command(async () => await OnComplete());
         DeleteCommand = new Command(async () => await OnDelete());
@@ -53,7 +53,7 @@ public class TodoDetailViewModel : BaseViewModel
     private async void LoadItemId(string itemId)
     {
         Title = "Edit Todo";
-        if (string.IsNullOrWhiteSpace(itemId))
+        if (string.IsNullOrWhiteSpace(itemId) || itemId == "0")
         {
             Title = "New Todo";
             return;
@@ -82,25 +82,41 @@ public class TodoDetailViewModel : BaseViewModel
             return;
         }
 
-        if (IsNewItem)
+        IsBusy = true;
+        try
         {
-            var newItem = new TodoItem
+            bool success;
+            string message;
+
+            if (IsNewItem)
             {
-                Title = ItemTitle,
-                Details = ItemDetails,
-                IsCompleted = false
-            };
-            await _todoService.AddItemAsync(newItem);
-        }
-        else
-        {
-            var item = await _todoService.GetItemAsync(ItemId);
-            if (item != null)
-            {
-                item.Title = ItemTitle;
-                item.Details = ItemDetails;
-                await _todoService.UpdateItemAsync(item);
+                (success, message) = await _todoService.AddItemAsync(new TodoItem
+                {
+                    Title = ItemTitle,
+                    Details = ItemDetails
+                });
             }
+            else
+            {
+                var item = await _todoService.GetItemAsync(ItemId);
+                if (item != null)
+                {
+                    item.Title = ItemTitle;
+                    item.Details = ItemDetails;
+                    (success, message) = await _todoService.UpdateItemAsync(item);
+                }
+                else
+                {
+                    (success, message) = (false, "Item not found.");
+                }
+            }
+
+            if (!success)
+                await Application.Current!.MainPage!.DisplayAlert("Error", message, "OK");
+        }
+        finally
+        {
+            IsBusy = false;
         }
 
         await Shell.Current.GoToAsync("..");
@@ -108,28 +124,44 @@ public class TodoDetailViewModel : BaseViewModel
 
     private async Task OnComplete()
     {
-        if (IsNewItem)
+        if (string.IsNullOrWhiteSpace(ItemTitle))
         {
-            var newItem = new TodoItem
-            {
-                Title = ItemTitle,
-                Details = ItemDetails,
-                IsCompleted = true
-            };
-            await _todoService.AddItemAsync(newItem);
+            await Application.Current!.MainPage!.DisplayAlert("Validation", "Title is required.", "OK");
+            return;
         }
-        else
+
+        IsBusy = true;
+        try
         {
-            var item = await _todoService.GetItemAsync(ItemId);
-            if (item != null)
+            if (IsNewItem)
             {
-                item.IsCompleted = true;
-                item.Title = ItemTitle;
-                item.Details = ItemDetails;
-                await _todoService.UpdateItemAsync(item);
+                // Add first, then mark complete
+                var (addOk, addMsg, _) = await _todoService.AddAndCompleteAsync(ItemTitle, ItemDetails);
+
+                if (!addOk)
+                {
+                    await Application.Current!.MainPage!.DisplayAlert("Error", addMsg, "OK");
+                    return;
+                }
+            }
+            else
+            {
+                var item = await _todoService.GetItemAsync(ItemId);
+                if (item != null)
+                {
+                    item.Title = ItemTitle;
+                    item.Details = ItemDetails;
+                    // Save edits first, then mark complete
+                    await _todoService.UpdateItemAsync(item);
+                    await _todoService.CompleteItemAsync(item);
+                }
             }
         }
-        
+        finally
+        {
+            IsBusy = false;
+        }
+
         await Shell.Current.GoToAsync("..");
     }
 
@@ -137,9 +169,22 @@ public class TodoDetailViewModel : BaseViewModel
     {
         if (!IsNewItem)
         {
-            await _todoService.DeleteItemAsync(ItemId);
+            IsBusy = true;
+            try
+            {
+                var (success, message) = await _todoService.DeleteItemAsync(ItemId);
+                if (!success)
+                {
+                    await Application.Current!.MainPage!.DisplayAlert("Error", message, "OK");
+                    return;
+                }
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
-        
+
         await Shell.Current.GoToAsync("..");
     }
 }

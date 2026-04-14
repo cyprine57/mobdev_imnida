@@ -19,9 +19,7 @@ public class TodoListViewModel : BaseViewModel
         {
             SetProperty(ref _selectedItem, value);
             if (value != null)
-            {
                 OnItemSelected(value);
-            }
         }
     }
 
@@ -32,7 +30,7 @@ public class TodoListViewModel : BaseViewModel
     {
         Title = "To Do";
         _todoService = todoService;
-        
+
         LoadItemsCommand = new Command(async () => await ExecuteLoadItemsCommand());
         AddItemCommand = new Command(async () => await OnAddItem());
     }
@@ -40,15 +38,16 @@ public class TodoListViewModel : BaseViewModel
     public async Task ExecuteLoadItemsCommand()
     {
         IsBusy = true;
-
         try
         {
             Items.Clear();
-            var items = await _todoService.GetItemsAsync();
-            foreach (var item in items.Where(i => !i.IsCompleted))
-            {
+            var items = await _todoService.GetActiveItemsAsync();
+            foreach (var item in items)
                 Items.Add(item);
-            }
+        }
+        catch (Exception ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Error", ex.Message, "OK");
         }
         finally
         {
@@ -58,19 +57,14 @@ public class TodoListViewModel : BaseViewModel
 
     private async Task OnAddItem()
     {
-        // Pass null or a new item to indicate creation
         await Shell.Current.GoToAsync(nameof(Views.TodoDetailPage));
     }
 
     private async void OnItemSelected(TodoItem item)
     {
-        if (item == null)
-            return;
+        if (item == null) return;
 
-        // Navigate to the detail page and pass the ID
-        await Shell.Current.GoToAsync($"{nameof(Views.TodoDetailPage)}?ItemId={item.Id}");
-
-        // Clear selection
+        await Shell.Current.GoToAsync($"{nameof(Views.TodoDetailPage)}?ItemId={item.ItemId}");
         SelectedItem = null;
     }
 }

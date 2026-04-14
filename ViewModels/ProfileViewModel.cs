@@ -1,18 +1,20 @@
 using System.Windows.Input;
+using ListImnida.Services;
 
 namespace ListImnida.ViewModels;
 
 public class ProfileViewModel : BaseViewModel
 {
-    // Simulate a logged-in user (in a real app this would come from a session/auth service)
-    private string _userName = "Demo User";
-    public string UserName
+    private readonly SessionService _session;
+
+    private string _fullName = string.Empty;
+    public string FullName
     {
-        get => _userName;
-        set => SetProperty(ref _userName, value);
+        get => _fullName;
+        set => SetProperty(ref _fullName, value);
     }
 
-    private string _email = "demo@listimnida.com";
+    private string _email = string.Empty;
     public string Email
     {
         get => _email;
@@ -21,15 +23,23 @@ public class ProfileViewModel : BaseViewModel
 
     public ICommand SignOutCommand { get; }
 
-    public ProfileViewModel()
+    public ProfileViewModel(SessionService session)
     {
         Title = "Profile";
+        _session = session;
         SignOutCommand = new Command(OnSignOut);
+
+        if (_session.CurrentUser != null)
+        {
+            FullName = _session.CurrentUser.FullName;
+            Email = _session.CurrentUser.Email;
+        }
     }
 
     private void OnSignOut()
     {
-        // Clear any session & go back to Login Page
-        Application.Current!.MainPage = new Views.LoginPage(new LoginViewModel());
+        _session.ClearUser();
+        var loginVm = IPlatformApplication.Current!.Services.GetRequiredService<LoginViewModel>();
+        Application.Current!.MainPage = new Views.LoginPage(loginVm);
     }
 }

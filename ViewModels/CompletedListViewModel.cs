@@ -19,9 +19,7 @@ public class CompletedListViewModel : BaseViewModel
         {
             SetProperty(ref _selectedItem, value);
             if (value != null)
-            {
                 OnItemSelected(value);
-            }
         }
     }
 
@@ -37,15 +35,16 @@ public class CompletedListViewModel : BaseViewModel
     public async Task ExecuteLoadItemsCommand()
     {
         IsBusy = true;
-
         try
         {
             Items.Clear();
-            var items = await _todoService.GetItemsAsync();
-            foreach (var item in items.Where(i => i.IsCompleted))
-            {
+            var items = await _todoService.GetCompletedItemsAsync();
+            foreach (var item in items)
                 Items.Add(item);
-            }
+        }
+        catch (Exception ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Error", ex.Message, "OK");
         }
         finally
         {
@@ -55,12 +54,9 @@ public class CompletedListViewModel : BaseViewModel
 
     private async void OnItemSelected(TodoItem item)
     {
-        if (item == null)
-            return;
+        if (item == null) return;
 
-        await Shell.Current.GoToAsync($"{nameof(Views.CompletedDetailPage)}?ItemId={item.Id}");
-
-        // Clear selection
+        await Shell.Current.GoToAsync($"{nameof(Views.CompletedDetailPage)}?ItemId={item.ItemId}");
         SelectedItem = null;
     }
 }

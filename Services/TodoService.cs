@@ -4,60 +4,129 @@ namespace ListImnida.Services;
 
 public interface ITodoService
 {
-    Task<IEnumerable<TodoItem>> GetItemsAsync();
+    Task<IEnumerable<TodoItem>> GetActiveItemsAsync();
+    Task<IEnumerable<TodoItem>> GetCompletedItemsAsync();
     Task<TodoItem?> GetItemAsync(string id);
-    Task AddItemAsync(TodoItem item);
-    Task UpdateItemAsync(TodoItem item);
-    Task DeleteItemAsync(string id);
+    Task<(bool Success, string Message)> AddItemAsync(TodoItem item);
+    Task<(bool Success, string Message)> UpdateItemAsync(TodoItem item);
+    Task<(bool Success, string Message)> CompleteItemAsync(TodoItem item);
+    Task<(bool Success, string Message)> UncompleteItemAsync(TodoItem item);
+    Task<(bool Success, string Message)> DeleteItemAsync(string id);
+    Task<(bool Success, string Message, TodoItem? Item)> AddAndCompleteAsync(string title, string details);
 }
 
 public class TodoService : ITodoService
 {
-    private readonly List<TodoItem> _items = new();
+    private readonly ApiService _api;
+    private readonly SessionService _session;
 
-    public TodoService()
+    // Local cache so GetItemAsync(id) can look up an item without a separate API call
+    private readonly List<TodoItem> _cache = new();
+
+    public TodoService(ApiService api, SessionService session)
     {
-        // Add some mock data
-        _items.Add(new TodoItem { Title = "Buy groceries", Details = "Milk, Eggs, Bread" });
-        _items.Add(new TodoItem { Title = "Call mom", Details = "Catch up on weekend plans" });
-        _items.Add(new TodoItem { Title = "Finish homework", Details = "Math assignment due tomorrow", IsCompleted = true });
+        _api = api;
+        _session = session;
     }
 
-    public Task<IEnumerable<TodoItem>> GetItemsAsync()
+    private int UserId => _session.CurrentUser?.Id ?? 0;
+
+    public async Task<IEnumerable<TodoItem>> GetActiveItemsAsync()
     {
-        return Task.FromResult<IEnumerable<TodoItem>>(_items);
+        var (_, _, items) = await _api.GetItemsAsync(UserId, "active");
+        // Merge into cache
+        foreach (var item in items)
+            UpsertCache(item);
+        return items;
+    }
+
+    public async Task<IEnumerable<TodoItem>> GetCompletedItemsAsync()
+    {
+        var (_, _, items) = await _api.GetItemsAsync(UserId, "inactive");
+        foreach (var item in items)
+            UpsertCache(item);
+        return items;
     }
 
     public Task<TodoItem?> GetItemAsync(string id)
     {
-        return Task.FromResult(_items.FirstOrDefault(x => x.Id == id));
+        if (int.TryParse(id, out var intId))
+            return Task.FromResult(_cache.FirstOrDefault(x => x.ItemId == intId));
+        return Task.FromResult<TodoItem?>(null);
     }
 
-    public Task AddItemAsync(TodoItem item)
+    public async Task<(bool Success, string Message)> AddItemAsync(TodoItem item)
     {
-        _items.Add(item);
-        return Task.CompletedTask;
+        var (success, message, created) = await _api.AddItemAsync(item.Title, item.Details, UserId);
+        if (success && created != null)
+            UpsertCache(created);
+        return (success, message);
     }
 
-    public Task UpdateItemAsync(TodoItem item)
+    public async Task<(bool Success, string Message)> UpdateItemAsync(TodoItem item)
     {
-        var existingItem = _items.FirstOrDefault(x => x.Id == item.Id);
-        if (existingItem != null)
+        var result = await _api.EditItemAsync(item.ItemId, item.Title, item.Details);
+        if (result.Success)
+            UpsertCache(item);
+        return result;
+    }
+
+    public async Task<(bool Success, string Message)> CompleteItemAsync(TodoItem item)
+    {
+        var result = await _api.ChangeStatusAsync(item.ItemId, "inactive");
+        if (result.Success)
         {
-            existingItem.Title = item.Title;
-            existingItem.Details = item.Details;
-            existingItem.IsCompleted = item.IsCompleted;
+            item.IsCompleted = true;
+            UpsertCache(item);
         }
-        return Task.CompletedTask;
+        return result;
     }
 
-    public Task DeleteItemAsync(string id)
+    public async Task<(bool Success, string Message)> UncompleteItemAsync(TodoItem item)
     {
-        var existingItem = _items.FirstOrDefault(x => x.Id == id);
-        if (existingItem != null)
+        var result = await _api.ChangeStatusAsync(item.ItemId, "active");
+        if (result.Success)
         {
-            _items.Remove(existingItem);
+            item.IsCompleted = false;
+            UpsertCache(item);
         }
-        return Task.CompletedTask;
+        return result;
+    }
+
+    public async Task<(bool Success, string Message)> DeleteItemAsync(string id)
+    {
+        if (!int.TryParse(id, out var intId))
+            return (false, "Invalid item id.");
+
+        var result = await _api.DeleteItemAsync(intId);
+        if (result.Success)
+            _cache.RemoveAll(x => x.ItemId == intId);
+        return result;
+    }
+
+    public async Task<(bool Success, string Message, TodoItem? Item)> AddAndCompleteAsync(string title, string details)
+    {
+        var (addOk, addMsg, item) = await _api.AddItemAsync(title, details, UserId);
+        if (!addOk || item == null)
+            return (false, addMsg, null);
+        UpsertCache(item);
+
+        var (completeOk, completeMsg) = await _api.ChangeStatusAsync(item.ItemId, "inactive");
+        if (completeOk)
+        {
+            item.IsCompleted = true;
+            UpsertCache(item);
+        }
+        return (completeOk, completeMsg, item);
+    }
+
+    // ── Cache helpers ─────────────────────────────────────────────────────────
+
+    private void UpsertCache(TodoItem item)
+    {
+        var existing = _cache.FirstOrDefault(x => x.ItemId == item.ItemId);
+        if (existing != null)
+            _cache.Remove(existing);
+        _cache.Add(item);
     }
 }

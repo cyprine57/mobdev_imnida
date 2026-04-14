@@ -1,14 +1,24 @@
 using System.Windows.Input;
+using ListImnida.Services;
 
 namespace ListImnida.ViewModels;
 
 public class SignUpViewModel : BaseViewModel
 {
-    private string _userName = string.Empty;
-    public string UserName
+    private readonly ApiService _api;
+
+    private string _firstName = string.Empty;
+    public string FirstName
     {
-        get => _userName;
-        set => SetProperty(ref _userName, value);
+        get => _firstName;
+        set => SetProperty(ref _firstName, value);
+    }
+
+    private string _lastName = string.Empty;
+    public string LastName
+    {
+        get => _lastName;
+        set => SetProperty(ref _lastName, value);
     }
 
     private string _email = string.Empty;
@@ -35,28 +45,54 @@ public class SignUpViewModel : BaseViewModel
     public ICommand SignUpCommand { get; }
     public ICommand GoBackCommand { get; }
 
-    public SignUpViewModel()
+    public SignUpViewModel(ApiService api)
     {
-        SignUpCommand = new Command(OnSignUpClicked);
+        _api = api;
+        SignUpCommand = new Command(async () => await OnSignUpClicked());
         GoBackCommand = new Command(OnGoBackClicked);
     }
 
-    private void OnSignUpClicked(object obj)
+    private async Task OnSignUpClicked()
     {
-        // Add basic validation for demonstration based on requirements
-        if (Password != ConfirmPassword)
+        if (string.IsNullOrWhiteSpace(FirstName) || string.IsNullOrWhiteSpace(LastName) ||
+            string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
         {
-            Application.Current?.MainPage?.DisplayAlert("Error", "Passwords do not match.", "OK");
+            await Application.Current!.MainPage!.DisplayAlert("Validation", "All fields are required.", "OK");
             return;
         }
 
-        // Navigate to AppShell upon successful sign up
-        Application.Current!.MainPage = new AppShell();
+        if (Password != ConfirmPassword)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Validation", "Passwords do not match.", "OK");
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var (success, message) = await _api.SignUpAsync(FirstName, LastName, Email, Password, ConfirmPassword);
+
+            if (success)
+            {
+                await Application.Current!.MainPage!.DisplayAlert("Success", message, "OK");
+                // Go back to login after successful sign-up
+                var loginVm = IPlatformApplication.Current!.Services.GetRequiredService<LoginViewModel>();
+                Application.Current!.MainPage = new NavigationPage(new Views.LoginPage(loginVm));
+            }
+            else
+            {
+                await Application.Current!.MainPage!.DisplayAlert("Sign Up Failed", message, "OK");
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     private void OnGoBackClicked(object obj)
     {
-        // Go back to Login Page
-        Application.Current!.MainPage = new Views.LoginPage(new LoginViewModel());
+        var loginVm = IPlatformApplication.Current!.Services.GetRequiredService<LoginViewModel>();
+        Application.Current!.MainPage = new NavigationPage(new Views.LoginPage(loginVm));
     }
 }

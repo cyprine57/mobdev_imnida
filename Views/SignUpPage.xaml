@@ -14,8 +14,12 @@
                    HorizontalOptions="Center" 
                    TextColor="{StaticResource Primary}"/>
 
-            <Entry Placeholder="User Name" 
-                   Text="{Binding UserName}" 
+            <Entry Placeholder="First Name" 
+                   Text="{Binding FirstName}" 
+                   Keyboard="Text"/>
+
+            <Entry Placeholder="Last Name" 
+                   Text="{Binding LastName}" 
                    Keyboard="Text"/>
                    
             <Entry Placeholder="Email Address" 

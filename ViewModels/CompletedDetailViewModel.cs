@@ -41,7 +41,7 @@ public class CompletedDetailViewModel : BaseViewModel
     public CompletedDetailViewModel(ITodoService todoService)
     {
         _todoService = todoService;
-        
+
         UpdateCommand = new Command(async () => await OnUpdate());
         IncompleteCommand = new Command(async () => await OnIncomplete());
         DeleteCommand = new Command(async () => await OnDelete());
@@ -50,8 +50,7 @@ public class CompletedDetailViewModel : BaseViewModel
     private async void LoadItemId(string itemId)
     {
         Title = "Completed Todo";
-        if (string.IsNullOrWhiteSpace(itemId))
-            return;
+        if (string.IsNullOrWhiteSpace(itemId)) return;
 
         try
         {
@@ -76,12 +75,25 @@ public class CompletedDetailViewModel : BaseViewModel
             return;
         }
 
-        var item = await _todoService.GetItemAsync(ItemId);
-        if (item != null)
+        IsBusy = true;
+        try
         {
-            item.Title = ItemTitle;
-            item.Details = ItemDetails;
-            await _todoService.UpdateItemAsync(item);
+            var item = await _todoService.GetItemAsync(ItemId);
+            if (item != null)
+            {
+                item.Title = ItemTitle;
+                item.Details = ItemDetails;
+                var (success, message) = await _todoService.UpdateItemAsync(item);
+                if (!success)
+                {
+                    await Application.Current!.MainPage!.DisplayAlert("Error", message, "OK");
+                    return;
+                }
+            }
+        }
+        finally
+        {
+            IsBusy = false;
         }
 
         await Shell.Current.GoToAsync("..");
@@ -89,23 +101,49 @@ public class CompletedDetailViewModel : BaseViewModel
 
     private async Task OnIncomplete()
     {
-        var item = await _todoService.GetItemAsync(ItemId);
-        if (item != null)
+        IsBusy = true;
+        try
         {
-            item.IsCompleted = false;
-            // Also apply potential edits while making it incomplete
-            item.Title = ItemTitle;
-            item.Details = ItemDetails;
-            
-            await _todoService.UpdateItemAsync(item);
+            var item = await _todoService.GetItemAsync(ItemId);
+            if (item != null)
+            {
+                item.Title = ItemTitle;
+                item.Details = ItemDetails;
+                // Save edits first, then unmark as complete
+                await _todoService.UpdateItemAsync(item);
+                var (success, message) = await _todoService.UncompleteItemAsync(item);
+                if (!success)
+                {
+                    await Application.Current!.MainPage!.DisplayAlert("Error", message, "OK");
+                    return;
+                }
+            }
         }
-        
+        finally
+        {
+            IsBusy = false;
+        }
+
         await Shell.Current.GoToAsync("..");
     }
 
     private async Task OnDelete()
     {
-        await _todoService.DeleteItemAsync(ItemId);
+        IsBusy = true;
+        try
+        {
+            var (success, message) = await _todoService.DeleteItemAsync(ItemId);
+            if (!success)
+            {
+                await Application.Current!.MainPage!.DisplayAlert("Error", message, "OK");
+                return;
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+
         await Shell.Current.GoToAsync("..");
     }
 }

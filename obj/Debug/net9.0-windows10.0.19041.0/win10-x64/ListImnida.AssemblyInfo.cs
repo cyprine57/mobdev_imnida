@@ -17,7 +17,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ListImnida")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+1f99bb16f0f4982e2b490d7be0c106cf26597a91")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+eccba036b0dfcbfed9cc582c81564b3212ad139e")]
 [assembly: System.Reflection.AssemblyProductAttribute("ListImnida")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ListImnida")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

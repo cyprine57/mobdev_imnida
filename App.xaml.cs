@@ -1,3 +1,6 @@
+using ListImnida.Views;
+using ListImnida.ViewModels;
+
 namespace ListImnida;
 
 public partial class App : Application
@@ -5,8 +8,11 @@ public partial class App : Application
     public App()
     {
         InitializeComponent();
+    }
 
-        // Start with the Login Page. It will navigate to AppShell upon successful login.
-        MainPage = new Views.LoginPage(new ViewModels.LoginViewModel());
+    protected override Window CreateWindow(IActivationState? activationState)
+    {
+        var loginPage = IPlatformApplication.Current!.Services.GetRequiredService<LoginPage>();
+        return new Window(new NavigationPage(loginPage));
     }
 }
